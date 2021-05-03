@@ -10,6 +10,7 @@ const Room = ({ props }) => {
   const [isHost, setIsHost] = useState(false);
   const [roomCode, setRoomCode] = useState(params.roomCode);
   const [showSettings, setShowSettings] = useState();
+  const [spotifyAuthenticated, setSpotifyAuthenticated] = useState(false);
 
   useEffect(() => {
     setRoomCode(params.roomCode);
@@ -30,6 +31,10 @@ const Room = ({ props }) => {
         setVotesToSkip(data.votes_to_skip),
           setGuestCanPause(data.guest_can_pause),
           setIsHost(data.is_host);
+
+        if (isHost) {
+          authenticateSpotify();
+        }
       });
   };
 
@@ -48,6 +53,21 @@ const Room = ({ props }) => {
     setShowSettings(value);
   };
 
+  const authenticateSpotify = () => {
+    fetch("/spotify/is-authenticated")
+      .then((response) => response.json())
+      .then((data) => {
+        setSpotifyAuthenticated(data.status);
+        if (!data.status) {
+          fetch("/spotify/get-auth-url")
+            .then((response) => response.json())
+            .then((data) => {
+              window.location.replace(data.url);
+            });
+        }
+      });
+  };
+
   const renderSettings = () => {
     return (
       <Grid container spacing={1}>
@@ -57,7 +77,7 @@ const Room = ({ props }) => {
             votesToSkip={votesToSkip}
             guestCanPause={guestCanPause}
             roomCode={roomCode}
-            updateCallback={() => {}}
+            updateCallback={getRoomDetails}
           ></CreateRoomPage>
         </Grid>
         <Grid item xs={12} align="center">
